@@ -13,7 +13,9 @@ const links = {
 
 
   return (
-    <footer className="bg-base-300 text-base-content py-8 mt-16">
+    // footer section position should fixed at below the page
+
+    <footer className="bg-base-300 text-base-content py-8 fixed bottom-0 left-0 right-0">
       <div className="container mx-auto px-4">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-6">
