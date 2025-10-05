@@ -1,81 +1,71 @@
-import express from 'express';
+// backend/src/server.js
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-import notesRoutes from './routes/notesRoutes.js';
-import connectDB from './config/db.js';
-import dotenv from 'dotenv';
-import rateLimiter from './middleware/rateLimiter.js';
-import cors from 'cors';
-import path from 'path';
+import notesRoutes from "./routes/notesRoutes.js";
+import connectDB from "./config/db.js";
+import rateLimiter from "./middleware/rateLimiter.js";
+
 dotenv.config();
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5001;
 
-// connectDB();
-//middleware
-const __dirname = path.resolve();
-app.use(express.json());
-if (process.env.NODE_ENV !== 'production') {
-app.use(cors({
-  origin: "http://localhost:5173" // Replace with your frontend URL
-}));
+// ESM-safe __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Middleware
+if (process.env.NODE_ENV !== "production") {
+  app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 }
-
-//our simple middleware helps authentication and logging
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
-  next();
-});
+app.use(express.json());
 app.use(rateLimiter);
 
+// API routes
 app.use("/api/notes", notesRoutes);
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../frontend", "dist", "index.html"));
+// Health check
+app.get("/health", (_req, res) =>
+  res.status(200).json({ ok: true, env: process.env.NODE_ENV || "development" })
+);
+
+// Serve React build (folder is 'frontend')
+if (process.env.NODE_ENV === "production") {
+  const distDir = path.resolve(__dirname, "../../frontend/dist"); // << FIX
+  app.use(express.static(distDir));
+
+  // Regex catch-all (avoids path-to-regexp string parsing issues)
+  app.get(/^\/(?!api\/).*/, (_req, res) => {
+    res.sendFile(path.join(distDir, "index.html")); // << FIX
   });
 }
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port http://localhost:${PORT}`);
-  });
-}).catch((error) => {
-  console.error('Failed to connect to the database:', error);
-  process.exit(1);
+
+// 404 for unknown API routes
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ error: "API route not found" });
+  }
+  next();
 });
 
+// Error handler
+app.use((err, _req, res, _next) => {
+  console.error("Unhandled error:", err);
+  res.status(err.status || 500).json({ error: err.message || "Server Error" });
+});
 
-
-
-
-/*
-mongodb+srv://eftekherali2000_db_user:efte2000@cluster0.nkany4k.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-
-*/
-
-// Sample route
-// app.get('/', (req, res) => {
-//   res.send('Hello World!');
-// });
-
-//Endpoint 
-//an endpoint is a combination of a URL and an HTTP method that allows clients to interact with a server.
-// app.get('/api/note', (req, res) => { 
-//   res.status(200).json({ message: 'There are 20 notes from the backend!' });
-// });
-
-// app.post('/api/note', (req, res) => {
-//   // Here you would handle the note creation logic
-//   res.status(201).json({ message: 'Note created successfully!' });
-// });
-
-// app.put('/api/note/:id', (req, res) => {
-//   const { id } = req.params;
-//   console.log(`Updating note with ID: ${id}`);
-//   res.status(200).json({ message: `Note with ID ${id} updated successfully!` });
-// })
-// app.delete('/api/note/:id', (req, res) => {
-//   const { id } = req.params;
-//   console.log(`Deleting note with ID: ${id}`);
-//   res.status(200).json({ message: `Note with ID ${id} deleted successfully!` });
-// });
+// Start after DB connects
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server started on http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Failed to connect to the database:", error);
+    process.exit(1);
+  });
