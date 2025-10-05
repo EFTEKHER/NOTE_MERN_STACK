@@ -1,9 +1,9 @@
 import express from 'express';
 
-import notesRoutes from './src/routes/notesRoutes.js';
-import connectDB from './src/config/db.js';
+import notesRoutes from './routes/notesRoutes.js';
+import connectDB from './config/db.js';
 import dotenv from 'dotenv';
-import rateLimiter from './src/middleware/rateLimiter.js';
+import rateLimiter from './middleware/rateLimiter.js';
 import cors from 'cors';
 import path from 'path';
 dotenv.config();
@@ -26,9 +26,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(rateLimiter);
-app.get("/", (req, res) => {
-  res.send("API is running...");
-});
+
 app.use("/api/notes", notesRoutes);
 
 if (process.env.NODE_ENV === 'production') {

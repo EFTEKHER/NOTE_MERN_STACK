@@ -15,7 +15,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-   "build":"npm install --prefix backend && npm install --prefix fortend && npm run build --prefix fortend",
+   "build":"npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
    "start":"npm start --prefix backend"
   }
 }
