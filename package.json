@@ -1,0 +1,21 @@
+{
+  "name": "react",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/EFTEKHER/NOTE_MERN_STACK#readme",
+  "bugs": {
+    "url": "https://github.com/EFTEKHER/NOTE_MERN_STACK/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EFTEKHER/NOTE_MERN_STACK.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+   "build":"npm install --prefix backend && npm install --prefix fortend && npm run build --prefix fortend",
+   "start":"npm start --prefix backend"
+  }
+}

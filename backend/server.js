@@ -5,16 +5,21 @@ import connectDB from './src/config/db.js';
 import dotenv from 'dotenv';
 import rateLimiter from './src/middleware/rateLimiter.js';
 import cors from 'cors';
+import path from 'path';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // connectDB();
 //middleware
+const __dirname = path.resolve();
 app.use(express.json());
+if (process.env.NODE_ENV !== 'production') {
 app.use(cors({
   origin: "http://localhost:5173" // Replace with your frontend URL
 }));
+}
+
 //our simple middleware helps authentication and logging
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
@@ -26,13 +31,20 @@ app.get("/", (req, res) => {
 });
 app.use("/api/notes", notesRoutes);
 
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, "../fortend/dist")));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../fortend", "dist", "index.html"));
+  });
+}
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server is running on port http://localhost:${PORT}`);
-  })}).catch((err) => {
-    console.error("Failed to connect to the database", err);
   });
-
+}).catch((error) => {
+  console.error('Failed to connect to the database:', error);
+  process.exit(1);
+});
 
 
 
